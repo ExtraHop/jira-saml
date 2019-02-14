@@ -34,7 +34,9 @@ import com.atlassian.jira.user.UserDetails;
 import com.atlassian.jira.user.util.UserManager;
 import com.atlassian.jira.event.user.UserEventType;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.JiraException;
+import com.atlassian.jira.security.groups.GroupManager;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -174,10 +176,11 @@ public class SAMLAuthenticator extends JiraSeraphAuthenticator
         logger.debug("SAML user: " + username);
 
         UserManager userManager = new ComponentAccessor().getUserManager();
+        GroupManager groupManager = new ComponentAccessor().getGroupManager();
 
         if (userManager.getUserByName(username) == null) {
 
-            String email = username;
+            String email = aset.getAttributes().get("urn:oid:1.2.840.113549.1.9.1").toString();
             String fullname = username;
 
             List<String> namelist = aset.getAttributes().get("Name");
@@ -186,8 +189,10 @@ public class SAMLAuthenticator extends JiraSeraphAuthenticator
 
             String password = generatePassword(20);
 
-            UserDetails details = new UserDetails(email, fullname)
-                .withPassword(password);
+            UserDetails details = new UserDetails(username, fullname)
+                .withPassword(password)
+                .withEmail(email);
+
 
             try {
                 userManager.createUser(details);
@@ -195,6 +200,22 @@ public class SAMLAuthenticator extends JiraSeraphAuthenticator
                 logger.error("Unable to auto-create user", e);
                 return null;
             }
+
+            ApplicationUser user = userManager.getUser(username);
+            com.atlassian.crowd.embedded.api.Group group;
+
+            for (String groupname : aset.getAttributes().get("member")) {
+              if ((group=groupManager.getGroup(groupname)) != null) {
+                try {
+                  groupManager.addUserToGroup (user,group);
+                } catch (Exception e) {
+                  logger.error("Unable to add " + username + " to group " + groupname + " because " + e);
+                }
+              } else {
+                logger.error("Unable to add " + username + " to missing group " + groupname );
+              }
+            }
+
         }
 
         Principal p = userManager.getUserByName(username);
