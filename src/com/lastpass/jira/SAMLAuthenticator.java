@@ -180,7 +180,7 @@ public class SAMLAuthenticator extends JiraSeraphAuthenticator
 
         if (userManager.getUserByName(username) == null) {
 
-            String email = aset.getAttributes().get("urn:oid:1.2.840.113549.1.9.1").toString();
+            String email = aset.getAttributes().get("urn:oid:1.2.840.113549.1.9.1").get(0);
             String fullname = username;
 
             List<String> namelist = aset.getAttributes().get("Name");
@@ -201,18 +201,23 @@ public class SAMLAuthenticator extends JiraSeraphAuthenticator
                 return null;
             }
 
-            ApplicationUser user = userManager.getUser(username);
+            ApplicationUser user;
             com.atlassian.crowd.embedded.api.Group group;
 
-            for (String groupname : aset.getAttributes().get("member")) {
-              if ((group=groupManager.getGroup(groupname)) != null) {
-                try {
-                  groupManager.addUserToGroup (user,group);
-                } catch (Exception e) {
-                  logger.error("Unable to add " + username + " to group " + groupname + " because " + e);
+            try {user = userManager.getUserByName(username);}
+            catch (Exception e) {logger.error("Couldn't find user I just created" + username); return null; }
+
+            if (aset.getAttributes().get("member") != null ) {
+              for (String groupname : aset.getAttributes().get("member")) {
+                if ((group=groupManager.getGroup(groupname)) != null) {
+                  try {
+                    groupManager.addUserToGroup (user,group);
+                  } catch (Exception e) {
+                    logger.error("Unable to add " + username + " to group " + groupname + " because " + e);
+                  }
+                } else {
+                  logger.error("Unable to add " + username + " to missing group " + groupname );
                 }
-              } else {
-                logger.error("Unable to add " + username + " to missing group " + groupname );
               }
             }
 
