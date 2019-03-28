@@ -17,12 +17,13 @@
   --
   --%>
 <%@ page import="com.lastpass.jira.SAMLAuthenticator" %>
+<% String context = request.getContextPath(); %>
 <%
     // This page is accessed to initiate SAML login when getUser() in the
     // authenticator returns null and there is no SAMLResponse being processed.
     // JIRA will go here when we click on a login link (based on seraph config).
     //
     // We generate an authnrequest and then redirect to the IdP.
-    String url = new SAMLAuthenticator().getRedirectUrl(request.getParameter("os_destination"));
+    String url = new SAMLAuthenticator().getRedirectUrl(context + request.getParameter("os_destination"));
     response.sendRedirect(response.encodeRedirectURL(url));
 %>
