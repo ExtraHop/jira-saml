@@ -16,14 +16,14 @@
   -- Copyright (c) 2014 LastPass, Inc.
   --
   --%>
-<%@ page import="com.atlassian.jira.ComponentManager" %>
+<%@ page import="com.atlassian.jira.component.ComponentAccessor" %>
 <%@ page import="com.atlassian.jira.security.JiraAuthenticationContext" %>
 <%
     // this page is where SAML authentication returns.
     // if auth is successful, user is added to session and
     // we redirect to the url in RelayState.  Otherwise, we
     // display an error page.
-    final JiraAuthenticationContext jiraAuthenticationContext = ComponentManager.getComponentInstanceOfType(JiraAuthenticationContext.class);
+    final JiraAuthenticationContext jiraAuthenticationContext = ComponentAccessor.getJiraAuthenticationContext();
 
     // verify SAMLResponse
     if (jiraAuthenticationContext.getLoggedInUser() != null) {
