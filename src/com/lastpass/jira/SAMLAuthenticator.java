@@ -130,8 +130,11 @@ public class SAMLAuthenticator extends JiraSeraphAuthenticator
         try {
             String authrequest = client.generateAuthnRequest(requestId);
             String url = client.getIdPConfig().getLoginUrl();
-            url = url +
-                "?SAMLRequest=" + URLEncoder.encode(authrequest, "UTF-8");
+            String sep = "?";
+            if (url.indexOf("?") > -1)
+                sep = "&";
+            url = url + sep +
+                "SAMLRequest=" + URLEncoder.encode(authrequest, "UTF-8");
 
             if (relayState != null)
                 url += "&RelayState=" + URLEncoder.encode(relayState, "UTF-8");
